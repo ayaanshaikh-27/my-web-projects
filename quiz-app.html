@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("quizApp_theme");
+        if (t !== "dark" && t !== "system") t = "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── LIGHT THEME ─── */
+    html {
+      color-scheme: light;
+      --bg:        #F7F5F2;
+      --bg-alt:    #EDEAE5;
+      --surface:   #FFFFFF;
+      --border:    #E2DDD8;
+      --border-s:  #C8C2BA;
+      --text:      #1A1714;
+      --text-sub:  #6B6560;
+      --text-muted:#9E9790;
+      --accent:    #D4622A;
+      --accent-h:  #BA5223;
+      --accent-lt: #FAF0EA;
+      --accent-bd: #EAB89A;
+      --ok:        #2B6B45;
+      --ok-bg:     #EAF4EE;
+      --ok-bd:     #96CEAD;
+      --err:       #9B2424;
+      --err-bg:    #FAEAEA;
+      --err-bd:    #E09090;
+      --warn:      #8A5E12;
+      --warn-bg:   #FDF3E0;
+      --radius:    4px;
+      --radius-lg: 10px;
+      --shadow:    0 1px 3px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.06);
+      --t: .2s ease;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg:        #141210;
+      --bg-alt:    #1E1B18;
+      --surface:   #252219;
+      --border:    #312E29;
+      --border-s:  #48443D;
+      --text:      #F0EDE8;
+      --text-sub:  #A09890;
+      --text-muted:#6A6360;
+      --accent:    #E07848;
+      --accent-h:  #EA8A5C;
+      --accent-lt: rgba(224,120,72,.12);
+      --accent-bd: rgba(224,120,72,.30);
+      --ok:        #4CAF78;
+      --ok-bg:     rgba(76,175,120,.12);
+      --ok-bd:     rgba(76,175,120,.30);
+      --err:       #E06060;
+      --err-bg:    rgba(224,96,96,.12);
+      --err-bd:    rgba(224,96,96,.30);
+      --warn:      #E0A84C;
+      --warn-bg:   rgba(224,168,76,.12);
+      --shadow:    0 1px 4px rgba(0,0,0,.25), 0 10px 30px rgba(0,0,0,.20);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      html[data-theme="system"] {
+        color-scheme: dark;
+        --bg:#141210; --bg-alt:#1E1B18; --surface:#252219;
+        --border:#312E29; --border-s:#48443D;
+        --text:#F0EDE8; --text-sub:#A09890; --text-muted:#6A6360;
+        --accent:#E07848; --accent-h:#EA8A5C;
+        --accent-lt:rgba(224,120,72,.12); --accent-bd:rgba(224,120,72,.30);
+        --ok:#4CAF78; --ok-bg:rgba(76,175,120,.12); --ok-bd:rgba(76,175,120,.30);
+        --err:#E06060; --err-bg:rgba(224,96,96,.12); --err-bd:rgba(224,96,96,.30);
+        --warn:#E0A84C; --warn-bg:rgba(224,168,76,.12);
+        --shadow:0 1px 4px rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.20);
+      }
+    }
+    @media (prefers-color-scheme: light) {
+      html[data-theme="system"] {
+        color-scheme: light;
+        --bg:#F7F5F2; --bg-alt:#EDEAE5; --surface:#FFFFFF;
+        --border:#E2DDD8; --border-s:#C8C2BA;
+        --text:#1A1714; --text-sub:#6B6560; --text-muted:#9E9790;
+        --accent:#D4622A; --accent-h:#BA5223;
+        --accent-lt:#FAF0EA; --accent-bd:#EAB89A;
+        --ok:#2B6B45; --ok-bg:#EAF4EE; --ok-bd:#96CEAD;
+        --err:#9B2424; --err-bg:#FAEAEA; --err-bd:#E09090;
+        --warn:#8A5E12; --warn-bg:#FDF3E0;
+        --shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+      }
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      transition: background var(--t), color var(--t);
+    }
+
+    .main-container { width: 100%; max-width: 480px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ─── WORDMARK ─── */
+    .wordmark {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .wordmark .dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* ─── LOGIN ─── */
+    .login-header { margin-bottom: 1.75rem; }
+    .login-header p { font-size: .875rem; color: var(--text-sub); margin-top: .3rem; }
+
+    .form-group { margin-bottom: .9rem; }
+    .form-group label {
+      display: block;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .35rem;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: .65rem .85rem;
+      font-size: .925rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border-s);
+      border-radius: var(--radius);
+      transition: border-color var(--t), box-shadow var(--t);
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239E9790' d='M3 4.5L6 8l3-3.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .75rem center;
+      padding-right: 2rem;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-lt);
+    }
+    .form-group input[readonly] { opacity: .7; cursor: not-allowed; }
+
+    .login-error {
+      font-size: .85rem;
+      color: var(--err);
+      background: var(--err-bg);
+      border: 1px solid var(--err-bd);
+      border-radius: var(--radius);
+      padding: .55rem .75rem;
+      margin-bottom: .85rem;
+      display: none;
+    }
+    .login-error.visible { display: block; }
+
+    /* ─── HINT BOXES ─── */
+    .credential-hint {
+      margin-top: 1.1rem;
+      padding: .8rem 1rem;
+      border-radius: var(--radius);
+      font-size: .82rem;
+      line-height: 1.6;
+      color: var(--text-sub);
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+    }
+    .credential-hint strong { color: var(--text); }
+
+    .admin-login-sample {
+      margin-top: .6rem;
+      padding: .8rem 1rem;
+      border-radius: var(--radius);
+      font-size: .82rem;
+      line-height: 1.6;
+      color: var(--accent);
+      background: var(--accent-lt);
+      border: 1px solid var(--accent-bd);
+    }
+    .admin-login-sample .label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .3rem;
+    }
+
+    .kbd {
+      font-family: ui-monospace, monospace;
+      font-size: .82em;
+      padding: .1rem .35rem;
+      border-radius: 3px;
+      background: var(--bg-alt);
+      border: 1px solid var(--border-s);
+      color: var(--text);
+    }
+
+    /* ─── THEME ROW ─── */
+    .theme-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .8rem;
+      color: var(--text-sub);
+    }
+    .theme-row label { font-weight: 600; color: var(--text); white-space: nowrap; }
+    .theme-row select {
+      max-width: 180px;
+      padding: .35rem .55rem;
+      font-size: .8rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border-s);
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    /* ─── AUTH SWITCH ─── */
+    .auth-switch {
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: .875rem;
+      color: var(--text-sub);
+    }
+    .auth-switch button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: inherit;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .auth-switch button:hover { color: var(--accent-h); }
+
+    /* ─── PROFILE BAR ─── */
+    .profile-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: .6rem;
+      padding: .65rem .9rem;
+      margin-bottom: 1.25rem;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .85rem;
+    }
+    .profile-info { color: var(--text-sub); }
+    .profile-info span.name { color: var(--text); font-weight: 600; }
+    .badge-admin {
+      display: inline-block;
+      margin-left: .35rem;
+      padding: .1rem .4rem;
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-radius: 3px;
+      background: var(--accent-lt);
+      color: var(--accent);
+      border: 1px solid var(--accent-bd);
+      vertical-align: middle;
+    }
+    .profile-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+    .btn-profile {
+      padding: .4rem .7rem;
+      font-size: .78rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-s);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--t), border-color var(--t);
+    }
+    .btn-profile:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+
+    .btn-logout {
+      padding: .4rem .7rem;
+      font-size: .78rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text-sub);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--t), color var(--t), border-color var(--t);
+    }
+    .btn-logout:hover { background: var(--err-bg); color: var(--err); border-color: var(--err-bd); }
+
+    /* ─── ADMIN TABS ─── */
+    .admin-tabs {
+      display: flex;
+      gap: .4rem;
+      margin-bottom: 1.25rem;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .25rem;
+    }
+    .admin-tabs.hidden { display: none; }
+    .tab-btn {
+      flex: 1;
+      padding: .45rem .6rem;
+      font-size: .82rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text-sub);
+      background: transparent;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background var(--t), color var(--t);
+    }
+    .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+    /* ─── ADMIN PANEL ─── */
+    .admin-panel {
+      margin-bottom: 1.25rem;
+      padding: 1.1rem;
+      border-radius: var(--radius);
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      animation: fadein .35s ease;
+    }
+    .admin-panel h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: .85rem;
+      color: var(--text);
+    }
+    .admin-msg {
+      font-size: .82rem;
+      margin-top: .65rem;
+      padding: .5rem .7rem;
+      border-radius: var(--radius);
+      display: none;
+    }
+    .admin-msg.visible { display: block; }
+    .admin-msg.success { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-bd); }
+    .admin-msg.error   { background: var(--err-bg); color: var(--err); border: 1px solid var(--err-bd); }
+
+    /* ─── QUIZ HEADER ─── */
+    .card-header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-header h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.02em;
+    }
+    .progress-wrap { margin-top: .85rem; }
+    .progress-label {
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: var(--accent);
+      transition: width .4s ease;
+    }
+
+    /* ─── QUESTION ─── */
+    .quiz-body { animation: fadein .4s ease; }
+    .quiz-body.animating { opacity: 0; transform: translateY(6px); animation: none; }
+    @keyframes fadein { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+
+    .question-section { margin-bottom: 1.25rem; }
+    .question-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    /* ─── OPTIONS ─── */
+    .options-section {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+    }
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      width: 100%;
+      text-align: left;
+      padding: .75rem 1rem;
+      font-size: .925rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color var(--t), background var(--t), transform .15s ease;
+      position: relative;
+    }
+    .option-btn::before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-s);
+      flex-shrink: 0;
+      transition: border-color var(--t), background var(--t);
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent-bd);
+      background: var(--accent-lt);
+      transform: translateX(3px);
+    }
+    .option-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .option-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent-lt);
+    }
+    .option-btn.selected::before {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: inset 0 0 0 3px var(--accent-lt);
+    }
+    .option-btn:disabled { cursor: not-allowed; }
+    .option-btn.correct { border-color: var(--ok-bd); background: var(--ok-bg); color: var(--ok); }
+    .option-btn.correct::before { border-color: var(--ok); background: var(--ok); }
+    .option-btn.wrong { border-color: var(--err-bd); background: var(--err-bg); color: var(--err); }
+    .option-btn.wrong::before { border-color: var(--err); background: var(--err); }
+
+    /* ─── FEEDBACK ─── */
+    .feedback-section {
+      min-height: 2.2rem;
+      margin-bottom: 1rem;
+      padding: .55rem .85rem;
+      border-radius: var(--radius);
+      font-size: .9rem;
+      font-weight: 600;
+      text-align: center;
+      opacity: 0;
+      transform: scale(.97);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .feedback-section.visible { opacity: 1; transform: scale(1); }
+    .feedback-section.correct-msg { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-bd); }
+    .feedback-section.wrong-msg   { background: var(--err-bg); color: var(--err); border: 1px solid var(--err-bd); }
+
+    /* ─── ACTIONS ─── */
+    .actions { display: flex; flex-direction: column; gap: .55rem; }
+    @media (min-width: 420px) { .actions { flex-direction: row; } }
+
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: .75rem 1rem;
+      font-size: .925rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow var(--t), background var(--t), opacity var(--t);
+    }
+    .btn-primary {
+      color: #fff;
+      background: var(--accent);
+      border: 1px solid transparent;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(212,98,42,.3); }
+    .btn-primary:active:not(:disabled) { transform: none; }
+    .btn-secondary {
+      color: var(--text);
+      background: var(--bg-alt);
+      border: 1px solid var(--border-s);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--bg); border-color: var(--accent); transform: translateY(-1px); }
+    .btn-primary:disabled, .btn-secondary:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .hint { font-size: .78rem; color: var(--text-muted); text-align: center; margin-top: .75rem; min-height: 1.15rem; }
+
+    /* ─── RESULTS ─── */
+    .results-section { text-align: center; padding: .5rem 0; display: none; }
+    .results-section.active { display: block; animation: fadein .45s ease; }
+    .results-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .results-score {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 1rem 0;
+      letter-spacing: -.03em;
+    }
+    .results-section p { color: var(--text-sub); margin-bottom: 1.5rem; font-size: .925rem; }
+    .results-section.tab-hidden { display: none !important; }
+
+    /* ─── PROFILE MODAL ─── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+    .modal-panel {
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      padding: 1.5rem;
+      transform: translateY(10px);
+      transition: transform .25s ease;
+    }
+    .modal-backdrop.open .modal-panel { transform: none; }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .modal-close {
+      width: 1.75rem;
+      height: 1.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-alt);
+      color: var(--text-sub);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background var(--t), color var(--t);
+    }
+    .modal-close:hover { background: var(--err-bg); color: var(--err); border-color: var(--err-bd); }
+  </style>
+</head>
+<body>
+  <main class="main-container">
+
+    <!-- ========== LOGIN ========== -->
+    <div class="card" id="loginCard">
+      <div class="theme-row">
+        <label for="themeSelectLogin">Appearance</label>
+        <select id="themeSelectLogin" aria-label="Theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="system">System default</option>
+        </select>
+      </div>
+      <div class="login-header">
+        <div class="wordmark"><span class="dot"></span>Quiz App</div>
+        <p>Sign in to take the quiz</p>
+      </div>
+      <form id="loginForm" autocomplete="on">
+        <div class="login-error" id="loginError" role="alert"></div>
+        <div class="form-group">
+          <label for="loginUserId">User ID</label>
+          <input type="text" id="loginUserId" name="username" required placeholder="Enter your user ID" />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" name="password" required placeholder="Enter your password" />
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;margin-top:.35rem;">Log in</button>
+      </form>
+      <div class="credential-hint" aria-label="Sample player credentials">
+        <strong>Sample player login</strong><br/>
+        User ID: <span class="kbd" id="hintPlayerId">player</span>
+        &nbsp;·&nbsp; Password: <span class="kbd" id="hintPlayerPass">player123</span>
+      </div>
+      <div class="admin-login-sample" aria-label="Administrator demo credentials">
+        <div class="label">Administrator login (demo only)</div>
+        User ID: <span class="kbd" id="hintAdminId">admin</span><br/>
+        Password: <span class="kbd" id="hintAdminPass">admin123</span>
+      </div>
+      <p class="auth-switch">New here? <button type="button" id="goSignupBtn">Create an account</button></p>
+    </div>
+
+    <!-- ========== SIGN UP ========== -->
+    <div class="card hidden" id="signupCard">
+      <div class="theme-row">
+        <label for="themeSelectSignup">Appearance</label>
+        <select id="themeSelectSignup" aria-label="Theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="system">System default</option>
+        </select>
+      </div>
+      <div class="login-header">
+        <div class="wordmark"><span class="dot"></span>Sign up</div>
+        <p>Create your profile to play the quiz</p>
+      </div>
+      <form id="signupForm" autocomplete="on">
+        <div class="login-error" id="signupError" role="alert"></div>
+        <div class="form-group">
+          <label for="suUserId">User ID</label>
+          <input type="text" id="suUserId" name="suUserId" required autocomplete="username" placeholder="Unique login id (e.g. alex01)" />
+        </div>
+        <div class="form-group">
+          <label for="suUsername">Username</label>
+          <input type="text" id="suUsername" name="suUsername" required placeholder="Display name" />
+        </div>
+        <div class="form-group">
+          <label for="suEmail">Email</label>
+          <input type="email" id="suEmail" name="suEmail" required autocomplete="email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="suDob">Date of birth</label>
+          <input type="date" id="suDob" name="suDob" required />
+        </div>
+        <div class="form-group">
+          <label for="suGender">Gender</label>
+          <select id="suGender" name="suGender" required>
+            <option value="" disabled selected>Select…</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="nonbinary">Non-binary</option>
+            <option value="other">Other</option>
+            <option value="prefer_not">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="suPassword">Password</label>
+          <input type="password" id="suPassword" name="suPassword" required autocomplete="new-password" placeholder="At least 4 characters" />
+        </div>
+        <div class="form-group">
+          <label for="suPassword2">Confirm password</label>
+          <input type="password" id="suPassword2" name="suPassword2" required autocomplete="new-password" placeholder="Repeat password" />
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;margin-top:.35rem;">Create account</button>
+      </form>
+      <p class="auth-switch">Already have an account? <button type="button" id="goLoginBtn">Back to log in</button></p>
+    </div>
+
+    <!-- ========== APP ========== -->
+    <div class="card hidden" id="appCard">
+      <div class="profile-bar" id="profileBar">
+        <div class="profile-info">
+          Logged in as <span class="name" id="profileName">—</span>
+          <span id="profileAdminBadge" class="badge-admin hidden">Admin</span>
+        </div>
+        <div class="profile-actions">
+          <button type="button" class="btn-profile" id="openProfileBtn">Profile</button>
+          <button type="button" class="btn-logout" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div class="admin-tabs hidden" id="adminTabs" role="tablist">
+        <button type="button" class="tab-btn active" id="tabQuiz" role="tab" aria-selected="true">Take quiz</button>
+        <button type="button" class="tab-btn" id="tabAdmin" role="tab" aria-selected="false">Add questions</button>
+      </div>
+
+      <div class="admin-panel hidden" id="adminPanel" role="tabpanel">
+        <h3>Add a new question</h3>
+        <div class="form-group">
+          <label for="newQText">Question</label>
+          <input type="text" id="newQText" placeholder="Type your question" />
+        </div>
+        <div class="form-group">
+          <label for="newOpt0">Option A</label>
+          <input type="text" id="newOpt0" class="new-opt" placeholder="First choice" />
+        </div>
+        <div class="form-group">
+          <label for="newOpt1">Option B</label>
+          <input type="text" id="newOpt1" class="new-opt" placeholder="Second choice" />
+        </div>
+        <div class="form-group">
+          <label for="newOpt2">Option C</label>
+          <input type="text" id="newOpt2" class="new-opt" placeholder="Third choice" />
+        </div>
+        <div class="form-group">
+          <label for="newOpt3">Option D</label>
+          <input type="text" id="newOpt3" class="new-opt" placeholder="Fourth choice" />
+        </div>
+        <div class="form-group">
+          <label for="newCorrect">Correct answer (must match one option exactly)</label>
+          <input type="text" id="newCorrect" placeholder="Copy the correct option text here" />
+        </div>
+        <button type="button" class="btn-primary" style="width:100%;" id="addQuestionBtn">Save question to quiz</button>
+        <div class="admin-msg" id="adminFormMsg"></div>
+      </div>
+
+      <header class="card-header" id="quizHeaderBlock">
+        <div class="wordmark"><span class="dot"></span>Quiz App</div>
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-label">
+            <span id="progressText">Question 1 of 5</span>
+            <span id="scoreInline">Score: 0</span>
+          </div>
+          <div class="progress-bar" aria-hidden="true">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </header>
+
+      <div class="quiz-active" id="quizActive">
+        <div class="quiz-body" id="quizBody">
+          <section class="question-section" aria-live="polite">
+            <h2 id="questionText">Loading question…</h2>
+          </section>
+          <section class="options-section" id="optionsSection" role="radiogroup" aria-labelledby="questionText"></section>
+          <section class="feedback-section" id="feedbackSection" role="status" aria-live="assertive"></section>
+          <div class="actions">
+            <button type="button" class="btn-primary" id="submitBtn" disabled>Submit answer</button>
+            <button type="button" class="btn-secondary" id="nextBtn" disabled>Next question</button>
+          </div>
+          <p class="hint" id="actionHint">Pick an answer, then tap Submit.</p>
+        </div>
+      </div>
+
+      <section class="results-section" id="resultsSection" aria-live="polite">
+        <h2>Quiz complete!</h2>
+        <p id="resultsMessage">Great job finishing the quiz.</p>
+        <div class="results-score" id="finalScoreText">You scored 0/5</div>
+        <button type="button" class="btn-primary" id="restartBtn" style="width:100%;max-width:260px;margin:0 auto;">Play again</button>
+      </section>
+    </div>
+
+    <!-- Profile modal -->
+    <div class="modal-backdrop" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="profileModalTitle">Your profile</h2>
+          <button type="button" class="modal-close" id="closeProfileBtn" aria-label="Close">×</button>
+        </div>
+        <div class="theme-row" style="margin-bottom:1rem;">
+          <label for="themeSelectProfile">Appearance</label>
+          <select id="themeSelectProfile" aria-label="Theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="system">System default</option>
+          </select>
+        </div>
+        <form id="profileForm">
+          <div class="form-group">
+            <label for="pfUserId">User ID</label>
+            <input type="text" id="pfUserId" readonly />
+          </div>
+          <div class="form-group">
+            <label for="pfUsername">Username</label>
+            <input type="text" id="pfUsername" required />
+          </div>
+          <div class="form-group">
+            <label for="pfEmail">Email</label>
+            <input type="email" id="pfEmail" required />
+          </div>
+          <div class="form-group">
+            <label for="pfDob">Date of birth</label>
+            <input type="date" id="pfDob" required />
+          </div>
+          <div class="form-group">
+            <label for="pfGender">Gender</label>
+            <select id="pfGender" required>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Non-binary</option>
+              <option value="other">Other</option>
+              <option value="prefer_not">Prefer not to say</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;">Save profile</button>
+        </form>
+        <p class="hint" id="profileSaveHint" style="margin-top:.65rem;"></p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const DEMO_ACCOUNTS = {
+      player: { password: "player123", role: "user", displayName: "Player" },
+      admin:  { password: "admin123",  role: "admin", displayName: "Administrator" },
+    };
+    const DEMO_BUILTIN_PROFILE = {
+      player: { username: "Player",        email: "player@demo.local", dob: "2000-01-01", gender: "prefer_not" },
+      admin:  { username: "Administrator", email: "admin@demo.local",  dob: "1990-06-15", gender: "prefer_not" },
+    };
+    const SESSION_KEY="quizApp_session", STORAGE_CUSTOM_Q="quizApp_customQuestions";
+    const THEME_KEY="quizApp_theme", USERS_KEY="quizApp_users", PROFILE_OVERRIDES_KEY="quizApp_profileOverrides";
+    const RESERVED_USER_IDS=["admin","player"];
+
+    function getTheme(){try{const t=localStorage.getItem(THEME_KEY);if(t==="dark"||t==="system")return t;return"light";}catch{return"light";}}
+    function setTheme(mode){const m=mode==="dark"||mode==="system"?mode:"light";try{localStorage.setItem(THEME_KEY,m);}catch(_){}document.documentElement.setAttribute("data-theme",m);syncThemeSelects();}
+    function syncThemeSelects(){const v=getTheme();[themeSelectLogin,themeSelectSignup,themeSelectProfile].forEach(el=>{if(el)el.value=v;});}
+    function readUsers(){try{const raw=localStorage.getItem(USERS_KEY);const o=raw?JSON.parse(raw):{};return o&&typeof o==="object"?o:{};}catch{return{};}}
+    function writeUsers(obj){localStorage.setItem(USERS_KEY,JSON.stringify(obj));}
+    function readProfileOverrides(){try{const raw=localStorage.getItem(PROFILE_OVERRIDES_KEY);const o=raw?JSON.parse(raw):{};return o&&typeof o==="object"?o:{};}catch{return{};}}
+    function writeProfileOverrides(obj){localStorage.setItem(PROFILE_OVERRIDES_KEY,JSON.stringify(obj));}
+    function mergeDemoProfile(userId){const base=DEMO_BUILTIN_PROFILE[userId]||{username:DEMO_ACCOUNTS[userId]?.displayName||userId,email:"",dob:"",gender:"prefer_not"};const over=readProfileOverrides()[userId]||{};return{...base,...over};}
+    function resolveLogin(userId,password){const id=userId.trim().toLowerCase();if(!id||password==null)return null;const demo=DEMO_ACCOUNTS[id];if(demo&&demo.password===password){const p=mergeDemoProfile(id);return{userId:id,role:demo.role,displayName:p.username||demo.displayName,username:p.username,email:p.email,dob:p.dob,gender:p.gender};}const users=readUsers();const u=users[id];if(u&&u.password===password){return{userId:id,role:u.role||"user",displayName:u.username,username:u.username,email:u.email,dob:u.dob,gender:u.gender};}return null;}
+    function hydrateSession(raw){if(!raw||!raw.userId)return null;const uid=raw.userId;if(DEMO_ACCOUNTS[uid]){const p=mergeDemoProfile(uid);return{userId:uid,role:DEMO_ACCOUNTS[uid].role,username:p.username,email:p.email,dob:p.dob,gender:p.gender,displayName:p.username||DEMO_ACCOUNTS[uid].displayName};}const u=readUsers()[uid];if(u){return{userId:uid,role:u.role||"user",username:u.username,email:u.email,dob:u.dob,gender:u.gender,displayName:u.username};}return null;}
+
+    const DEFAULT_QUESTIONS=[
+      {question:"What is HTML?",options:["Language","Database","OS","Browser"],answer:"Language"},
+      {question:"Which language runs in a web browser?",options:["Python","Java","JavaScript","C++"],answer:"JavaScript"},
+      {question:"What does CSS stand for?",options:["Cascading Style Sheets","Creative Style System","Computer Style Syntax","Coded Style Structure"],answer:"Cascading Style Sheets"},
+      {question:"Which HTML tag is used for the largest heading?",options:["<h6>","<heading>","<h1>","<head>"],answer:"<h1>"},
+      {question:"What is the purpose of the <a> tag in HTML?",options:["Display an image","Create a hyperlink","Define a table","Add a script"],answer:"Create a hyperlink"},
+    ];
+
+    function loadQuestionBank(){let extra=[];try{extra=JSON.parse(localStorage.getItem(STORAGE_CUSTOM_Q)||"[]");if(!Array.isArray(extra))extra=[];}catch{extra=[];}return DEFAULT_QUESTIONS.concat(extra);}
+    let questions=[];
+
+    const loginCard=document.getElementById("loginCard"),appCard=document.getElementById("appCard"),loginForm=document.getElementById("loginForm"),loginError=document.getElementById("loginError"),loginUserId=document.getElementById("loginUserId"),loginPassword=document.getElementById("loginPassword"),signupCard=document.getElementById("signupCard"),signupForm=document.getElementById("signupForm"),signupError=document.getElementById("signupError"),goSignupBtn=document.getElementById("goSignupBtn"),goLoginBtn=document.getElementById("goLoginBtn"),themeSelectLogin=document.getElementById("themeSelectLogin"),themeSelectSignup=document.getElementById("themeSelectSignup"),themeSelectProfile=document.getElementById("themeSelectProfile"),profileModal=document.getElementById("profileModal"),openProfileBtn=document.getElementById("openProfileBtn"),closeProfileBtn=document.getElementById("closeProfileBtn"),profileForm=document.getElementById("profileForm"),pfUserId=document.getElementById("pfUserId"),pfUsername=document.getElementById("pfUsername"),pfEmail=document.getElementById("pfEmail"),pfDob=document.getElementById("pfDob"),pfGender=document.getElementById("pfGender"),profileSaveHint=document.getElementById("profileSaveHint"),profileName=document.getElementById("profileName"),profileAdminBadge=document.getElementById("profileAdminBadge"),logoutBtn=document.getElementById("logoutBtn"),adminTabs=document.getElementById("adminTabs"),adminPanel=document.getElementById("adminPanel"),tabQuiz=document.getElementById("tabQuiz"),tabAdmin=document.getElementById("tabAdmin"),quizHeaderBlock=document.getElementById("quizHeaderBlock"),addQuestionBtn=document.getElementById("addQuestionBtn"),adminFormMsg=document.getElementById("adminFormMsg"),newQText=document.getElementById("newQText"),newCorrect=document.getElementById("newCorrect"),quizActive=document.getElementById("quizActive"),quizBody=document.getElementById("quizBody"),questionText=document.getElementById("questionText"),optionsSection=document.getElementById("optionsSection"),feedbackSection=document.getElementById("feedbackSection"),submitBtn=document.getElementById("submitBtn"),nextBtn=document.getElementById("nextBtn"),actionHint=document.getElementById("actionHint"),progressText=document.getElementById("progressText"),progressFill=document.getElementById("progressFill"),scoreInline=document.getElementById("scoreInline"),resultsSection=document.getElementById("resultsSection"),finalScoreText=document.getElementById("finalScoreText"),resultsMessage=document.getElementById("resultsMessage"),restartBtn=document.getElementById("restartBtn");
+
+    let session=null,currentIndex=0,score=0,selectedOption=null,submitted=false,resultsVisible=false;
+
+    function showLoginError(msg){loginError.textContent=msg;loginError.classList.add("visible");}
+    function clearLoginError(){loginError.textContent="";loginError.classList.remove("visible");}
+    function readSession(){try{const raw=sessionStorage.getItem(SESSION_KEY);if(!raw)return null;const s=JSON.parse(raw);if(!s||!s.userId||!s.role)return null;return s;}catch{return null;}}
+    function writeSession(s){sessionStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+    function clearSession(){sessionStorage.removeItem(SESSION_KEY);}
+
+    function showApp(){loginCard.classList.add("hidden");signupCard.classList.add("hidden");appCard.classList.remove("hidden");profileName.textContent=session.displayName||session.username||session.userId;if(session.role==="admin"){profileAdminBadge.classList.remove("hidden");adminTabs.classList.remove("hidden");}else{profileAdminBadge.classList.add("hidden");adminTabs.classList.add("hidden");adminPanel.classList.add("hidden");switchTab("quiz");}prepareQuizFromBank();}
+    function showLoginView(){signupCard.classList.add("hidden");loginCard.classList.remove("hidden");clearSignupError();syncThemeSelects();}
+    function showSignupView(){loginCard.classList.add("hidden");signupCard.classList.remove("hidden");clearLoginError();syncThemeSelects();}
+    function showSignupError(msg){signupError.textContent=msg;signupError.classList.add("visible");}
+    function clearSignupError(){signupError.textContent="";signupError.classList.remove("visible");}
+    function showLogin(){appCard.classList.add("hidden");showLoginView();clearSession();session=null;loginForm.reset();signupForm.reset();clearLoginError();clearSignupError();closeProfileModal();}
+
+    function openProfileModal(){if(!session)return;pfUserId.value=session.userId;pfUsername.value=session.username||session.displayName||"";pfEmail.value=session.email||"";pfDob.value=session.dob||"";pfGender.value=session.gender||"prefer_not";profileSaveHint.textContent="";profileModal.classList.add("open");syncThemeSelects();pfUsername.focus();}
+    function closeProfileModal(){profileModal.classList.remove("open");}
+
+    function switchTab(which){const isQuiz=which==="quiz";tabQuiz.classList.toggle("active",isQuiz);tabAdmin.classList.toggle("active",!isQuiz);tabQuiz.setAttribute("aria-selected",isQuiz);tabAdmin.setAttribute("aria-selected",!isQuiz);adminPanel.classList.toggle("hidden",isQuiz);if(!isQuiz){quizHeaderBlock.classList.add("hidden");quizActive.classList.add("hidden");resultsSection.classList.add("tab-hidden");return;}quizHeaderBlock.classList.remove("hidden");resultsSection.classList.remove("tab-hidden");if(resultsVisible){quizActive.classList.add("hidden");resultsSection.classList.add("active");}else{resultsSection.classList.remove("active");quizActive.classList.remove("hidden");}}
+
+    function prepareQuizFromBank(){questions=loadQuestionBank();currentIndex=0;score=0;selectedOption=null;submitted=false;resultsVisible=false;nextBtn.textContent="Next question";resultsSection.classList.remove("active","tab-hidden");quizActive.classList.remove("hidden");renderQuestion();}
+
+    function updateProgressUI(){const total=questions.length;if(total===0){progressText.textContent="No questions";progressFill.style.width="0%";scoreInline.textContent=`Score: ${score}`;return;}progressText.textContent=`Question ${currentIndex+1} of ${total}`;progressFill.style.width=`${((currentIndex+1)/total)*100}%`;scoreInline.textContent=`Score: ${score}`;}
+    function setHint(text){actionHint.textContent=text;}
+    function resetFeedback(){feedbackSection.textContent="";feedbackSection.className="feedback-section";}
+    function animateQuestionChange(callback){quizBody.classList.add("animating");void quizBody.offsetWidth;requestAnimationFrame(()=>{quizBody.classList.remove("animating");callback();void quizBody.offsetWidth;quizBody.style.animation="none";requestAnimationFrame(()=>{quizBody.style.animation="";});});}
+
+    function renderQuestion(){if(questions.length===0){questionText.textContent="No questions available. An admin can add some.";optionsSection.innerHTML="";submitBtn.disabled=true;nextBtn.disabled=true;resetFeedback();updateProgressUI();setHint("");return;}const q=questions[currentIndex];questionText.textContent=q.question;optionsSection.innerHTML="";q.options.forEach(opt=>{const btn=document.createElement("button");btn.type="button";btn.className="option-btn";btn.textContent=opt;btn.setAttribute("role","radio");btn.setAttribute("aria-checked","false");btn.dataset.value=opt;btn.addEventListener("click",()=>onOptionClick(opt,btn));optionsSection.appendChild(btn);});selectedOption=null;submitted=false;submitBtn.disabled=true;nextBtn.disabled=true;resetFeedback();updateProgressUI();setHint("Pick an answer, then tap Submit.");}
+
+    function onOptionClick(value,clickedBtn){if(submitted)return;selectedOption=value;optionsSection.querySelectorAll(".option-btn").forEach(b=>{b.classList.toggle("selected",b===clickedBtn);b.setAttribute("aria-checked",b===clickedBtn?"true":"false");});submitBtn.disabled=false;setHint('Ready! Tap "Submit answer" to check.');}
+
+    function onSubmit(){if(!selectedOption||submitted||questions.length===0)return;submitted=true;const q=questions[currentIndex];const isCorrect=selectedOption===q.answer;if(isCorrect){score++;feedbackSection.textContent="Correct ✓";feedbackSection.classList.add("correct-msg","visible");}else{feedbackSection.textContent="Wrong ✗";feedbackSection.classList.add("wrong-msg","visible");}optionsSection.querySelectorAll(".option-btn").forEach(b=>{const val=b.dataset.value;b.disabled=true;if(val===q.answer)b.classList.add("correct");else if(val===selectedOption&&!isCorrect)b.classList.add("wrong");});submitBtn.disabled=true;updateProgressUI();const isLast=currentIndex===questions.length-1;if(isLast){nextBtn.textContent="See results";nextBtn.disabled=false;setHint('Tap "See results" for your final score.');}else{nextBtn.disabled=false;setHint('Tap "Next question" to continue.');}}
+
+    function onNext(){if(!submitted)return;const isLast=currentIndex===questions.length-1;if(isLast){showResults();return;}currentIndex++;animateQuestionChange(renderQuestion);nextBtn.textContent="Next question";}
+
+    function showResults(){resultsVisible=true;quizActive.classList.add("hidden");resultsSection.classList.remove("tab-hidden");resultsSection.classList.add("active");const total=questions.length;finalScoreText.textContent=`${score} / ${total}`;let msg="Thanks for playing!";if(total===0)msg="Add questions to play.";else if(score===total)msg="Perfect score — outstanding!";else if(score>=total*.7)msg="Strong work — keep it up!";else if(score>=total*.4)msg="Good effort — review and try again!";else msg="Keep practicing — you'll get there!";resultsMessage.textContent=msg;}
+
+    function onRestart(){resultsVisible=false;questions=loadQuestionBank();currentIndex=0;score=0;selectedOption=null;submitted=false;nextBtn.textContent="Next question";resultsSection.classList.remove("active","tab-hidden");quizActive.classList.remove("hidden");animateQuestionChange(renderQuestion);}
+
+    loginForm.addEventListener("submit",e=>{e.preventDefault();clearLoginError();const uid=loginUserId.value.trim().toLowerCase();const pwd=loginPassword.value;const resolved=resolveLogin(uid,pwd);if(!resolved){showLoginError("Invalid User ID or password. Create an account or use the sample logins below.");return;}session=resolved;writeSession(session);showApp();});
+    goSignupBtn.addEventListener("click",()=>showSignupView());
+    goLoginBtn.addEventListener("click",()=>showLoginView());
+
+    signupForm.addEventListener("submit",e=>{e.preventDefault();clearSignupError();const uid=document.getElementById("suUserId").value.trim().toLowerCase();const username=document.getElementById("suUsername").value.trim();const email=document.getElementById("suEmail").value.trim();const dob=document.getElementById("suDob").value;const gender=document.getElementById("suGender").value;const pass=document.getElementById("suPassword").value;const pass2=document.getElementById("suPassword2").value;if(!uid||!username||!email||!dob||!gender){showSignupError("Please fill in every field.");return;}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showSignupError("Please enter a valid email address.");return;}if(pass.length<4){showSignupError("Password must be at least 4 characters.");return;}if(pass!==pass2){showSignupError("Passwords do not match.");return;}if(RESERVED_USER_IDS.includes(uid)||DEMO_ACCOUNTS[uid]){showSignupError("This User ID is reserved. Pick a different one.");return;}const users=readUsers();if(users[uid]){showSignupError("That User ID is already taken.");return;}users[uid]={password:pass,role:"user",username,email,dob,gender};writeUsers(users);session={userId:uid,role:"user",displayName:username,username,email,dob,gender};writeSession(session);signupForm.reset();showApp();});
+
+    function onThemeSelectChange(e){setTheme(e.target.value);}
+    themeSelectLogin.addEventListener("change",onThemeSelectChange);
+    themeSelectSignup.addEventListener("change",onThemeSelectChange);
+    themeSelectProfile.addEventListener("change",onThemeSelectChange);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(getTheme()==="system")document.documentElement.setAttribute("data-theme","system");});
+
+    openProfileBtn.addEventListener("click",()=>openProfileModal());
+    closeProfileBtn.addEventListener("click",()=>closeProfileModal());
+    profileModal.addEventListener("click",e=>{if(e.target===profileModal)closeProfileModal();});
+
+    profileForm.addEventListener("submit",e=>{e.preventDefault();if(!session)return;const username=pfUsername.value.trim();const email=pfEmail.value.trim();const dob=pfDob.value;const gender=pfGender.value;if(!username||!email||!dob||!gender){profileSaveHint.textContent="Please complete all fields.";return;}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){profileSaveHint.textContent="Please enter a valid email.";return;}const uid=session.userId;const users=readUsers();if(users[uid]){users[uid]={...users[uid],username,email,dob,gender};writeUsers(users);}else{const over=readProfileOverrides();over[uid]={username,email,dob,gender};writeProfileOverrides(over);}session={...session,username,email,dob,gender,displayName:username};writeSession(session);profileName.textContent=session.displayName;profileSaveHint.textContent="Profile saved.";setTimeout(()=>closeProfileModal(),600);});
+
+    logoutBtn.addEventListener("click",()=>showLogin());
+    tabQuiz.addEventListener("click",()=>switchTab("quiz"));
+    tabAdmin.addEventListener("click",()=>switchTab("admin"));
+
+    function showAdminMsg(text,ok){adminFormMsg.textContent=text;adminFormMsg.className="admin-msg visible "+(ok?"success":"error");}
+    function hideAdminMsg(){adminFormMsg.textContent="";adminFormMsg.className="admin-msg";}
+
+    addQuestionBtn.addEventListener("click",()=>{if(!session||session.role!=="admin")return;hideAdminMsg();const text=newQText.value.trim();const opts=[0,1,2,3].map(i=>document.getElementById("newOpt"+i).value.trim());const correct=newCorrect.value.trim();if(!text){showAdminMsg("Please enter the question text.",false);return;}if(opts.some(o=>!o)){showAdminMsg("Please fill all four options.",false);return;}const uniq=new Set(opts);if(uniq.size!==4){showAdminMsg("Options must be different from each other.",false);return;}if(!correct||!opts.includes(correct)){showAdminMsg("Correct answer must exactly match one of the four options (copy/paste).",false);return;}const newQ={question:text,options:opts,answer:correct};let list=[];try{list=JSON.parse(localStorage.getItem(STORAGE_CUSTOM_Q)||"[]");if(!Array.isArray(list))list=[];}catch{list=[];}list.push(newQ);localStorage.setItem(STORAGE_CUSTOM_Q,JSON.stringify(list));newQText.value="";[0,1,2,3].forEach(i=>{document.getElementById("newOpt"+i).value="";});newCorrect.value="";showAdminMsg("Question saved! It appears after the built-in questions on the next quiz.",true);questions=loadQuestionBank();});
+
+    submitBtn.addEventListener("click",onSubmit);
+    nextBtn.addEventListener("click",onNext);
+    restartBtn.addEventListener("click",onRestart);
+
+    setTheme(getTheme());
+    session=hydrateSession(readSession());
+    if(session){writeSession(session);showApp();}else{clearSession();session=null;}
+  </script>
+</body>
+</html>
